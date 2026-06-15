@@ -116,14 +116,10 @@ class TableroConecta(Base):
 
 
 class CursorColumna:
-    """Entidad lógica: selecciona columnas (no celdas individuales).
-       ADAPTADA del Cursor de Tres en Raya.
-       Mundo lógico: columna  →  Mundo gráfico: x"""
+    """Entidad lógica: selecciona columnas (solo mantiene índice de columna)."""
 
     def __init__(self, columna=0):
         self.columna  = columna
-        self.pulso    = 0
-        self.incPulso = 3
 
     def moverIzquierda(self):
         if self.columna > 0:
@@ -136,18 +132,16 @@ class CursorColumna:
     def getColumna(self):
         return self.columna
 
-    def update(self):
-        """Animación pulsante."""
-        self.pulso += self.incPulso
-        if self.pulso >= 18 or self.pulso <= 0:
-            self.incPulso = -self.incPulso
 
-    def render(self, pantalla, x, y, e, color):
-        """Dibuja un triángulo apuntando hacia abajo sobre la columna activa."""
+class CursorColumnaGrafico:
+    """Parte gráfica del cursor de columna: dibuja el triángulo indicador.
+       Recibe el pulso desde la escena."""
+
+    def render(self, pantalla, x, y, e, color, pulso):
         lienzo = pygame.Surface((e, e), pygame.SRCALPHA)
 
         # Triángulo indicador pulsante
-        margen = 4 + self.pulso // 6
+        margen = 4 + pulso // 6
         puntos = [
             (e // 2,          e - margen),   # punta abajo
             (margen,          margen),        # esquina izquierda
@@ -300,6 +294,10 @@ class EscenaConecta4:
 
         # Entidad lógica: cursor (solo columnas)
         self.cursor = CursorColumna(0)
+        # Cursor gráfico y animación de pulso
+        self.cursorGrafico = CursorColumnaGrafico()
+        self.cursorPulso = 0
+        self.cursorIncPulso = 3
 
         # Entidad lógica: juego
         self.juego = Conecta4()
@@ -332,7 +330,10 @@ class EscenaConecta4:
         if self.juego.hayEmpate():
             return
 
-        self.cursor.update()
+        # Animación del pulso del cursor (la escena la gestiona ahora)
+        self.cursorPulso += self.cursorIncPulso
+        if self.cursorPulso >= 18 or self.cursorPulso <= 0:
+            self.cursorIncPulso = -self.cursorIncPulso
 
     # ── RENDER ─────────────────────────────────
     def render(self, pantalla):
@@ -346,7 +347,7 @@ class EscenaConecta4:
 
         colorCursor = (255, 80, 80) if self.juego.getTurno() == Conecta4.JUGADOR1 \
                       else (255, 220, 0)
-        self.cursor.render(pantalla, xCursor, yCursor, self.e, colorCursor)
+        self.cursorGrafico.render(pantalla, xCursor, yCursor, self.e, colorCursor, self.cursorPulso)
 
         # Fichas en el tablero
         matriz = self.juego.getMatriz()
@@ -385,7 +386,7 @@ class EscenaConecta4:
         textoT = self.fuente.render(f"Turno: {nombre}", True, color)
         pantalla.blit(textoT, (10, 10))
 
-        ayuda = self.fuente.render("← → para mover  Enter para soltar", True, (150, 150, 150))
+        ayuda = self.fuente.render("← → para mover  Espacio para soltar", True, (150, 150, 150))
         pantalla.blit(ayuda, (10, 530))
 
     def _renderMensaje(self, pantalla, texto):
@@ -397,6 +398,8 @@ class EscenaConecta4:
     def reiniciar(self):
         self.juego.reiniciar()
         self.cursor = CursorColumna(0)
+        self.cursorPulso = 0
+        self.cursorIncPulso = 3
 
 
 # ─────────────────────────────────────────────

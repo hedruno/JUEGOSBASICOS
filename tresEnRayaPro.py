@@ -108,13 +108,11 @@ class Tablero(Base):
 
 class Cursor:
     """Entidad lógica: posición en fila/columna.
-       Su render convierte fila,columna → x,y (mundo lógico → mundo gráfico)."""
+       Solo mantiene la posición y las reglas de movimiento (sin animación)."""
 
     def __init__(self, fila, columna):
         self.fila    = fila
         self.columna = columna
-        self.pulso   = 0          # animación pulsante
-        self.incPulso = 2
 
     def moverArriba(self):
         if self.fila > 0:
@@ -141,17 +139,15 @@ class Cursor:
     def getPosicion(self):
         return (self.fila, self.columna)
 
-    def update(self):
-        """Animación pulsante del cursor."""
-        self.pulso += self.incPulso
-        if self.pulso >= 20 or self.pulso <= 0:
-            self.incPulso = -self.incPulso
 
-    def render(self, pantalla, x, y, e, color):
+class CursorGrafico:
+    """Parte gráfica del cursor: dibuja según pulso y posición recibidos desde la escena."""
+
+    def render(self, pantalla, x, y, e, color, pulso):
         lienzo = pygame.Surface((3*e, 3*e), pygame.SRCALPHA)
 
         # Borde pulsante (varía el grosor con el pulso)
-        grosor = 2 + self.pulso // 8
+        grosor = 2 + pulso // 8
         pygame.draw.rect(lienzo, color, (e//2, e//2, 2*e, 2*e), grosor)
 
         # Esquinas decorativas
@@ -284,6 +280,10 @@ class EscenaTresEnRaya:
 
         # Entidad lógica: cursor
         self.cursor = Cursor(1, 1)
+        # Cursor gráfico y animación de pulso (antes estaba en la entidad)
+        self.cursorGrafico = CursorGrafico()
+        self.cursorPulso = 0
+        self.cursorIncPulso = 2
 
         # Entidad lógica: juego
         self.juego = TresEnRaya()
@@ -344,8 +344,11 @@ class EscenaTresEnRaya:
         else:
             self.oTurno.alfa += 2
 
-        # Cursor pulsante
-        self.cursor.update()
+        # Cursor pulsante (la escena maneja la animación y pasa el pulso
+        # a la parte gráfica `CursorGrafico` en el render)
+        self.cursorPulso += self.cursorIncPulso
+        if self.cursorPulso >= 20 or self.cursorPulso <= 0:
+            self.cursorIncPulso = -self.cursorIncPulso
 
     # ── RENDER ─────────────────────────────────
     def render(self, pantalla):
@@ -358,7 +361,7 @@ class EscenaTresEnRaya:
 
         colorCursor = (255, 80, 80) if self.juego.getTurno() == TresEnRaya.FICHA_X \
                       else (0, 220, 220)
-        self.cursor.render(pantalla, x, y, self.e, colorCursor)
+        self.cursorGrafico.render(pantalla, x, y, self.e, colorCursor, self.cursorPulso)
 
         # Fichas en el tablero
         matriz = self.juego.getMatriz()
@@ -410,7 +413,7 @@ class EscenaTresEnRaya:
         pantalla.blit(textoO, (360, 185))
         pantalla.blit(textoP, (360, 210))
 
-        ayuda = self.fuente.render("Flechas+Enter", True, (150, 150, 150))
+        ayuda = self.fuente.render("Flechas+Espacio", True, (150, 150, 150))
         pantalla.blit(ayuda, (360, 350))
 
     def _renderMensaje(self, pantalla, texto):
@@ -423,6 +426,8 @@ class EscenaTresEnRaya:
     def reiniciar(self):
         self.juego.reiniciar()
         self.cursor   = Cursor(1, 1)
+        self.cursorPulso = 0
+        self.cursorIncPulso = 2
         self.xTurno.alfa = 0
         self.oTurno.alfa = 0
         self.xTurno.e    = self.e // 2
