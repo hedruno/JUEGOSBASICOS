@@ -322,7 +322,7 @@ class EscenaConecta4:
             self.cursor.moverIzquierda()
         elif evento.key == pygame.K_RIGHT:
             self.cursor.moverDerecha()
-        elif evento.key == pygame.K_RETURN:
+        elif evento.key == pygame.K_SPACE:
             self.juego.jugar(self.cursor.getColumna())
 
     # ── UPDATE ─────────────────────────────────
