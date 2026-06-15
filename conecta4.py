@@ -32,12 +32,13 @@ class Base:
     def setEscala(self, e):
         self.e = e
 
+class FichaO(Base):
+    """Ficha con estilo 'O' de Tres en Raya, adaptable a cualquier color."""
 
-class FichaRoja(Base):
-    """Ficha circular del jugador 1 (rojo).
-       NUEVA para Conecta 4, hereda Base."""
-    def __init__(self, x, y, e):
+    def __init__(self, x, y, e, color_principal, color_detalle):
         super().__init__(x, y, e)
+        self.color_principal = color_principal
+        self.color_detalle   = color_detalle
 
     def render(self, pantalla):
         e = self.e
@@ -45,37 +46,14 @@ class FichaRoja(Base):
 
         cx = e // 2
         cy = e // 2
-        r  = e // 2 - 3
+        r  = e // 2 - 4
 
-        pygame.draw.circle(lienzo, self.color,       (cx, cy), r)
-        pygame.draw.circle(lienzo, (200, 0, 0),      (cx, cy), r, 2)
-        # Brillo decorativo
-        pygame.draw.circle(lienzo, (255, 150, 150),  (cx - r//3, cy - r//3), r//4)
-
-        # Traslación + Rotación + Escalado (mismo patrón que el original)
-        Rotacion   = pygame.transform.rotate(lienzo, self.alfa)
-        Traslacion = Rotacion.get_rect(topleft=(self.x, self.y))
-        pantalla.blit(Rotacion, Traslacion)
-
-
-class FichaAmarilla(Base):
-    """Ficha circular del jugador 2 (amarillo).
-       NUEVA para Conecta 4, hereda Base."""
-    def __init__(self, x, y, e):
-        super().__init__(x, y, e)
-
-    def render(self, pantalla):
-        e = self.e
-        lienzo = pygame.Surface((e, e), pygame.SRCALPHA)
-
-        cx = e // 2
-        cy = e // 2
-        r  = e // 2 - 3
-
-        pygame.draw.circle(lienzo, self.color,      (cx, cy), r)
-        pygame.draw.circle(lienzo, (200, 180, 0),   (cx, cy), r, 2)
-        # Brillo decorativo
-        pygame.draw.circle(lienzo, (255, 255, 150), (cx - r//3, cy - r//3), r//4)
+        # Círculo exterior (color del jugador)
+        pygame.draw.circle(lienzo, self.color_principal, (cx, cy), r, 3)
+        # Círculo interior decorativo
+        pygame.draw.circle(lienzo, self.color_detalle,   (cx, cy), max(r - 4, 1), 1)
+        # Punto central
+        pygame.draw.circle(lienzo, self.color_principal, (cx, cy), 3)
 
         Rotacion   = pygame.transform.rotate(lienzo, self.alfa)
         Traslacion = Rotacion.get_rect(topleft=(self.x, self.y))
@@ -358,13 +336,15 @@ class EscenaConecta4:
                 py = self.tablero.y + fila    * self.e
 
                 if matriz[fila][columna] == Conecta4.JUGADOR1:
-                    ficha = FichaRoja(px, py, self.e)
-                    ficha.setColor((220, 50, 50))
+                    ficha = FichaO(px, py, self.e,
+                   color_principal=(220, 50, 50),   # rojo
+                   color_detalle=(200, 0, 0))       # rojo oscuro para contraste
                     ficha.render(pantalla)
 
                 elif matriz[fila][columna] == Conecta4.JUGADOR2:
-                    ficha = FichaAmarilla(px, py, self.e)
-                    ficha.setColor((230, 210, 0))
+                    ficha = FichaO(px, py, self.e,
+                   color_principal=(230, 210, 0),   # amarillo
+                   color_detalle=(180, 160, 0))     # amarillo oscuro
                     ficha.render(pantalla)
 
         # Panel de información
