@@ -183,6 +183,7 @@ class TresEnRaya:
         # Estadísticas (Trabajo 01 - nueva funcionalidad)
         self.victoriasX  = 0
         self.victoriasO  = 0
+        self.empates     = 0
         self.partidas    = 0
 
     def getMatriz(self):
@@ -197,22 +198,27 @@ class TresEnRaya:
     def jugar(self, fila, columna):
         if self.matriz[fila][columna] != self.VACIO:
             return False
-
+    
         self.matriz[fila][columna] = self.turno
         self.verificarGanador()
 
-        if self.ganador == self.VACIO:
-            if self.turno == self.FICHA_X:
-                self.turno = self.FICHA_O
-            else:
-                self.turno = self.FICHA_X
-        else:
+        if self.ganador != self.VACIO:
             # Sumar victoria
             self.partidas += 1
             if self.ganador == self.FICHA_X:
                 self.victoriasX += 1
             else:
                 self.victoriasO += 1
+        elif self.hayEmpate():
+            # Sumar empate
+            self.partidas += 1
+            self.empates += 1
+        else:
+            # Cambiar turno solo si no hay fin de partida
+            if self.turno == self.FICHA_X:
+                self.turno = self.FICHA_O
+            else:
+                self.turno = self.FICHA_X
 
         return True
 
@@ -246,8 +252,6 @@ class TresEnRaya:
             for casilla in fila:
                 if casilla == self.VACIO:
                     return False
-        # Contar empate como partida
-        self.partidas += 1
         return True
 
     def reiniciar(self):
@@ -406,12 +410,15 @@ class EscenaTresEnRaya:
             f"Victorias X: {self.juego.victoriasX}", True, (255, 100, 100))
         textoO  = self.fuente.render(
             f"Victorias O: {self.juego.victoriasO}", True, (0, 220, 220))
+        textoE  = self.fuente.render(
+            f"Empates: {self.juego.empates}",      True, (200, 200, 200))
         textoP  = self.fuente.render(
             f"Partidas: {self.juego.partidas}",      True, (200, 200, 200))
 
         pantalla.blit(textoX, (360, 160))
         pantalla.blit(textoO, (360, 185))
-        pantalla.blit(textoP, (360, 210))
+        pantalla.blit(textoE, (360, 210))
+        pantalla.blit(textoP, (360, 235))
 
         ayuda = self.fuente.render("Flechas+Espacio", True, (150, 150, 150))
         pantalla.blit(ayuda, (360, 350))
